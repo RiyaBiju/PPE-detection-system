@@ -9,7 +9,7 @@ Download and place in root folder:
 - gloves_best.pt (Gloves)
 - shoes_best.pt (Safety Shoes)
 - goggles_best.pt (Goggles)
-
+https://drive.google.com/drive/folders/1B3tUMfBOo_16n9n49TfH3rpN5-qUhlVM?usp=drive_link Drive link for model weights.
 ## Installation
 pip install -r requirements.txt
 
