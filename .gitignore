@@ -1,0 +1,9 @@
+*.pt
+*.mp4
+*.jpg
+*.jpeg
+*.png
+runs/
+__pycache__/
+*.pyc
+.env
