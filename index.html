@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PPE Guard — Safety Monitoring System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #0d1117;
+    --surface:   #161b22;
+    --surface2:  #1c2330;
+    --border:    #2a3344;
+    --border2:   #3a4a60;
+    --text:      #e6edf3;
+    --muted:     #7d8fa3;
+    --accent:    #1f6feb;
+    --accent2:   #388bfd;
+    --ok:        #238636;
+    --ok-light:  #2ea043;
+    --ok-glow:   rgba(35,134,54,0.18);
+    --warn:      #9e6a03;
+    --warn-light:#d29922;
+    --warn-glow: rgba(158,106,3,0.18);
+    --danger:    #8b1a1a;
+    --danger-light:#f85149;
+    --danger-glow:rgba(139,26,26,0.2);
+    --radius:    10px;
+    --radius-lg: 14px;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── Layout ── */
+  .app { display: grid; grid-template-rows: 58px 1fr; height: 100vh; }
+
+  /* ── Topbar ── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .logo {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+  }
+  .logo svg { width: 18px; height: 18px; fill: #fff; }
+  .brand { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); }
+  .brand span { color: var(--muted); font-weight: 400; }
+
+  .header-center { display: flex; align-items: center; gap: 6px; }
+  .nav-tab {
+    padding: 5px 14px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; color: var(--muted);
+    cursor: pointer; border: none; background: transparent;
+    transition: all 0.15s;
+  }
+  .nav-tab:hover { background: var(--surface2); color: var(--text); }
+  .nav-tab.active { background: var(--surface2); color: var(--text); }
+
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 20px;
+    background: var(--ok-glow); border: 1px solid var(--ok);
+    font-size: 12px; font-weight: 500; color: var(--ok-light);
+  }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok-light); animation: blink 1.4s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .time-display { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .models-badge {
+    display: flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: 500;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .models-badge.loaded { border-color: var(--ok); color: var(--ok-light); background: var(--ok-glow); }
+  .models-badge.loading { border-color: var(--warn); color: var(--warn-light); background: var(--warn-glow); animation: blink 1s infinite; }
+
+  /* ── Main content ── */
+  main {
+    display: grid;
+    grid-template-columns: 260px 1fr 300px;
+    grid-template-rows: 1fr;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  aside {
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 20px 16px;
+    display: flex; flex-direction: column; gap: 20px;
+    background: var(--surface);
+  }
+  .section-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  /* PPE Status cards */
+  .ppe-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 13px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    transition: all 0.2s;
+    margin-bottom: 6px;
+  }
+  .ppe-item:last-child { margin-bottom: 0; }
+  .ppe-item.status-ok    { border-color: var(--ok);     background: var(--ok-glow); }
+  .ppe-item.status-missing { border-color: var(--danger-light); background: var(--danger-glow); }
+  .ppe-item.status-waiting { opacity: 0.5; }
+
+  .ppe-icon {
+    width: 32px; height: 32px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+    background: var(--border);
+  }
+  .ppe-item.status-ok .ppe-icon    { background: var(--ok-glow); }
+  .ppe-item.status-missing .ppe-icon { background: var(--danger-glow); }
+
+  .ppe-info { flex: 1; min-width: 0; }
+  .ppe-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .ppe-state {
+    font-size: 11px; font-weight: 500; margin-top: 1px;
+    color: var(--muted);
+  }
+  .ppe-item.status-ok .ppe-state    { color: var(--ok-light); }
+  .ppe-item.status-missing .ppe-state { color: var(--danger-light); }
+
+  .ppe-pill {
+    font-family: var(--mono); font-size: 10px;
+    padding: 2px 7px; border-radius: 10px; font-weight: 500;
+    background: var(--border); color: var(--muted);
+  }
+  .ppe-item.status-ok .ppe-pill { background: var(--ok); color: #e6f4ea; }
+  .ppe-item.status-missing .ppe-pill { background: var(--danger-light); color: #fff; }
+
+  /* Sidebar stat row */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-box {
+    padding: 12px; border-radius: var(--radius);
+    background: var(--surface2); border: 1px solid var(--border);
+    text-align: center;
+  }
+  .stat-value {
+    font-family: var(--mono); font-size: 22px; font-weight: 500;
+    color: var(--text); line-height: 1;
+  }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* Controls */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; padding: 9px 14px; border-radius: var(--radius);
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text);
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--border); }
+  .btn:active { transform: scale(0.98); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+  .btn.danger { background: var(--danger); border-color: var(--danger-light); color: var(--danger-light); }
+  .btn.danger:hover { background: rgba(139,26,26,0.5); }
+  .btn.success { background: var(--ok); border-color: var(--ok-light); color: #c6f3cb; }
+  .btn.success:hover { background: var(--ok-light); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* File input */
+  .upload-zone {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; padding: 16px;
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    cursor: pointer; transition: all 0.15s;
+    text-align: center;
+  }
+  .upload-zone:hover { border-color: var(--accent2); background: rgba(31,111,235,0.06); }
+  .upload-zone span { font-size: 12px; color: var(--muted); }
+  .upload-zone .icon { font-size: 22px; }
+  #file-input { display: none; }
+
+  /* ── Center panel ── */
+  .center {
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .video-wrapper {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    position: relative;
+  }
+  .video-frame {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    width: 100%; max-width: 760px;
+    aspect-ratio: 4/3;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #stream-img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: none;
+  }
+  .video-placeholder {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; color: var(--muted); text-align: center; padding: 40px;
+  }
+  .video-placeholder .big-icon { font-size: 48px; opacity: 0.3; }
+  .video-placeholder h3 { font-size: 15px; font-weight: 500; color: var(--muted); }
+  .video-placeholder p { font-size: 13px; color: var(--muted); opacity: 0.7; max-width: 280px; }
+
+  .video-overlay-tl {
+    position: absolute; top: 12px; left: 12px;
+    display: flex; gap: 6px;
+  }
+  .cam-label-badge {
+    padding: 3px 9px; border-radius: 5px;
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    background: rgba(0,0,0,0.65); color: #fff;
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(4px);
+  }
+  .cam-rec-badge {
+    display: flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 5px;
+    font-family: var(--mono); font-size: 11px;
+    background: rgba(248,81,73,0.85); color: #fff;
+  }
+  .cam-rec-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: blink 1s infinite; }
+
+  .video-overlay-br {
+    position: absolute; bottom: 12px; right: 12px;
+    font-family: var(--mono); font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    background: rgba(0,0,0,0.5); padding: 3px 9px; border-radius: 5px;
+    backdrop-filter: blur(4px);
+  }
+
+  /* Stats bar below video */
+  .stats-bar {
+    display: flex; align-items: stretch;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .stats-cell {
+    flex: 1; padding: 14px 20px;
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .stats-cell:last-child { border-right: none; }
+  .stats-cell-val {
+    font-family: var(--mono); font-size: 20px; font-weight: 500;
+    color: var(--text);
+  }
+  .stats-cell-val.ok { color: var(--ok-light); }
+  .stats-cell-val.danger { color: var(--danger-light); }
+  .stats-cell-lbl { font-size: 11px; color: var(--muted); }
+
+  /* ── Right panel ── */
+  .right-panel {
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 20px 16px;
+    display: flex; flex-direction: column; gap: 20px;
+    background: var(--surface);
+  }
+
+  /* Alert log */
+  .alert-item {
+    display: flex; gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    margin-bottom: 6px;
+  }
+  .alert-item:last-child { margin-bottom: 0; }
+  .alert-item.critical { border-left: 3px solid var(--danger-light); background: var(--danger-glow); }
+  .alert-item.warning  { border-left: 3px solid var(--warn-light);   background: var(--warn-glow);   }
+  .alert-item.ok       { border-left: 3px solid var(--ok-light);     background: var(--ok-glow);     }
+  .alert-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+  }
+  .alert-item.critical .alert-dot { background: var(--danger-light); }
+  .alert-item.warning  .alert-dot { background: var(--warn-light); }
+  .alert-item.ok       .alert-dot { background: var(--ok-light); }
+  .alert-title { font-size: 12px; font-weight: 500; color: var(--text); }
+  .alert-time  { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+
+  /* Compliance bar */
+  .compliance-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .compliance-pct { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--ok-light); }
+  .compliance-track {
+    height: 8px; border-radius: 10px;
+    background: var(--border); overflow: hidden; margin-bottom: 12px;
+  }
+  .compliance-fill {
+    height: 100%; border-radius: 10px;
+    background: var(--ok-light);
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  /* Settings sliders */
+  .settings-row { margin-bottom: 12px; }
+  .settings-row label {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--muted); margin-bottom: 5px;
+  }
+  .settings-row label span { font-family: var(--mono); color: var(--text); }
+  input[type="range"] {
+    width: 100%; accent-color: var(--accent2);
+    height: 4px; cursor: pointer;
+  }
+
+  /* Tabs inside panels */
+  .panel-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+  .panel-tab {
+    padding: 4px 12px; border-radius: 5px;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    border: none; background: transparent; color: var(--muted);
+    transition: all 0.15s;
+  }
+  .panel-tab:hover { background: var(--surface2); color: var(--text); }
+  .panel-tab.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+
+  /* Tab content */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Dividers */
+  .divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* FPS indicator */
+  .fps-pill {
+    font-family: var(--mono); font-size: 11px;
+    padding: 2px 8px; border-radius: 4px;
+    background: var(--surface2); color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  /* Analyzed image */
+  #analyzed-img {
+    width: 100%; border-radius: var(--radius);
+    border: 1px solid var(--border); display: none; margin-top: 8px;
+  }
+
+  /* Alert log empty */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 24px 16px; color: var(--muted); text-align: center; gap: 6px;
+  }
+  .empty-state .icon { font-size: 28px; opacity: 0.3; }
+  .empty-state p { font-size: 12px; }
+
+  /* Responsive tweak */
+  @media (max-width: 900px) {
+    main { grid-template-columns: 220px 1fr; }
+    .right-panel { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ── Header ── -->
+  <header>
+    <div class="header-left">
+      <div class="logo">
+        <svg viewBox="0 0 24 24"><path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z"/></svg>
+      </div>
+      <div>
+        <div class="brand">PPE Guard <span>/ Safety Monitoring</span></div>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <button class="nav-tab active" onclick="switchTab('monitor')">Monitor</button>
+      <button class="nav-tab" onclick="switchTab('analyse')">Analyse Image</button>
+      <button class="nav-tab" onclick="switchTab('settings')">Settings</button>
+    </div>
+
+    <div class="header-right">
+      <span class="fps-pill" id="fps-display">0 fps</span>
+      <div class="models-badge loading" id="models-badge">⬤ Loading models</div>
+      <div class="live-badge" id="live-badge" style="display:none">
+        <div class="live-dot"></div> LIVE
+      </div>
+      <div class="time-display" id="clock">--:--:--</div>
+    </div>
+  </header>
+
+  <!-- ── Main ── -->
+  <main>
+
+    <!-- ── Left Sidebar ── -->
+    <aside>
+
+      <!-- PPE Detection Status -->
+      <div>
+        <div class="section-label">PPE Status</div>
+        <div id="ppe-status-list">
+          <div class="ppe-item status-waiting" data-key="hard_hat">
+            <div class="ppe-icon">⛑</div>
+            <div class="ppe-info">
+              <div class="ppe-name">Hard Hat</div>
+              <div class="ppe-state">Waiting for detection</div>
+            </div>
+            <div class="ppe-pill">—</div>
+          </div>
+          <div class="ppe-item status-waiting" data-key="vest">
+            <div class="ppe-icon">🦺</div>
+            <div class="ppe-info">
+              <div class="ppe-name">Safety Vest</div>
+              <div class="ppe-state">Waiting for detection</div>
+            </div>
+            <div class="ppe-pill">—</div>
+          </div>
+          <div class="ppe-item status-waiting" data-key="gloves">
+            <div class="ppe-icon">🧤</div>
+            <div class="ppe-info">
+              <div class="ppe-name">Gloves</div>
+              <div class="ppe-state">Waiting for detection</div>
+            </div>
+            <div class="ppe-pill">—</div>
+          </div>
+          <div class="ppe-item status-waiting" data-key="shoes">
+            <div class="ppe-icon">👟</div>
+            <div class="ppe-info">
+              <div class="ppe-name">Safety Shoes</div>
+              <div class="ppe-state">Waiting for detection</div>
+            </div>
+            <div class="ppe-pill">—</div>
+          </div>
+          <div class="ppe-item status-waiting" data-key="goggles">
+            <div class="ppe-icon">🥽</div>
+            <div class="ppe-info">
+              <div class="ppe-name">Goggles</div>
+              <div class="ppe-state">Waiting for detection</div>
+            </div>
+            <div class="ppe-pill">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Session Stats -->
+      <div>
+        <div class="section-label">Session</div>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="stat-frames">0</div>
+            <div class="stat-label">Frames</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stat-persons">0</div>
+            <div class="stat-label">Persons</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stat-compliant" style="color:var(--ok-light)">0</div>
+            <div class="stat-label">Compliant</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stat-violations" style="color:var(--danger-light)">0</div>
+            <div class="stat-label">Violations</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Camera Controls -->
+      <div>
+        <div class="section-label">Camera</div>
+        <div style="display:flex; flex-direction:column; gap:7px;">
+          <button class="btn success" id="btn-start" onclick="startWebcam()">
+            ▶ Start Camera
+          </button>
+          <button class="btn danger" id="btn-stop" onclick="stopWebcam()" disabled>
+            ■ Stop Camera
+          </button>
+          <button class="btn" onclick="resetStats()">
+            ↺ Reset Stats
+          </button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ── Center: Monitor Tab ── -->
+    <div class="center" id="tab-monitor">
+
+      <div class="video-wrapper">
+        <div class="video-frame">
+          <!-- Overlays -->
+          <div class="video-overlay-tl" id="vid-overlays" style="display:none">
+            <div class="cam-label-badge">CAM 01 — LIVE</div>
+            <div class="cam-rec-badge"><div class="cam-rec-dot"></div> REC</div>
+          </div>
+          <div class="video-overlay-br" id="vid-res" style="display:none">640 × 480</div>
+
+          <!-- Stream image -->
+          <img id="stream-img" alt="PPE Detection Stream" />
+
+          <!-- Placeholder -->
+          <div class="video-placeholder" id="vid-placeholder">
+            <div class="big-icon">📷</div>
+            <h3>Camera Inactive</h3>
+            <p>Click "Start Camera" in the sidebar to begin real-time PPE detection.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="stats-bar">
+        <div class="stats-cell">
+          <div class="stats-cell-val" id="bar-fps">0.0</div>
+          <div class="stats-cell-lbl">FPS</div>
+        </div>
+        <div class="stats-cell">
+          <div class="stats-cell-val" id="bar-persons">0</div>
+          <div class="stats-cell-lbl">Persons Detected</div>
+        </div>
+        <div class="stats-cell">
+          <div class="stats-cell-val ok" id="bar-compliant">0</div>
+          <div class="stats-cell-lbl">Compliant Frames</div>
+        </div>
+        <div class="stats-cell">
+          <div class="stats-cell-val danger" id="bar-violations">0</div>
+          <div class="stats-cell-lbl">Violations</div>
+        </div>
+        <div class="stats-cell">
+          <div class="stats-cell-val" id="bar-frames">0</div>
+          <div class="stats-cell-lbl">Total Frames</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Center: Analyse Tab ── -->
+    <div class="center" id="tab-analyse" style="display:none">
+      <div style="padding:28px; max-width:700px; margin:0 auto; width:100%;">
+        <div style="margin-bottom:20px;">
+          <div style="font-size:16px; font-weight:600; color:var(--text); margin-bottom:4px;">Image Analysis</div>
+          <div style="font-size:13px; color:var(--muted);">Upload a photo to run single-frame PPE detection.</div>
+        </div>
+
+        <label class="upload-zone" for="file-input" id="upload-zone">
+          <div class="icon">📂</div>
+          <div style="font-size:13px; font-weight:500; color:var(--text);">Drop image or click to browse</div>
+          <span>PNG, JPG, WEBP — up to 10 MB</span>
+        </label>
+        <input type="file" id="file-input" accept="image/*" onchange="handleFileSelect(event)" />
+
+        <div id="analyse-status" style="display:none; margin-top:12px;">
+          <div style="display:flex; align-items:center; gap:8px; padding:10px 14px; border-radius:var(--radius); background:var(--surface2); border:1px solid var(--border);">
+            <div style="font-size:13px; color:var(--muted);" id="analyse-status-text">Processing…</div>
+          </div>
+        </div>
+
+        <img id="analyzed-img" alt="Analysis Result" />
+
+        <div id="analyse-ppe-results" style="display:none; margin-top:16px;">
+          <div class="section-label" style="margin-bottom:10px;">Detection Results</div>
+          <div id="analyse-ppe-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Center: Settings Tab ── -->
+    <div class="center" id="tab-settings" style="display:none">
+      <div style="padding:28px; max-width:560px; margin:0 auto; width:100%;">
+        <div style="margin-bottom:20px;">
+          <div style="font-size:16px; font-weight:600; color:var(--text); margin-bottom:4px;">Detection Settings</div>
+          <div style="font-size:13px; color:var(--muted);">Adjust confidence thresholds and smoothing parameters.</div>
+        </div>
+
+        <div style="background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px; margin-bottom:16px;">
+          <div style="font-size:13px; font-weight:500; color:var(--text); margin-bottom:14px;">Person Detection</div>
+          <div class="settings-row">
+            <label>Person confidence <span id="lbl-person-conf">0.40</span></label>
+            <input type="range" min="0.1" max="0.9" step="0.05" value="0.40" id="sl-person-conf" oninput="document.getElementById('lbl-person-conf').textContent=parseFloat(this.value).toFixed(2)" />
+          </div>
+          <div class="settings-row">
+            <label>Smoothing window <span id="lbl-smooth-win">15</span> frames</label>
+            <input type="range" min="1" max="50" step="1" value="15" id="sl-smooth-win" oninput="document.getElementById('lbl-smooth-win').textContent=this.value" />
+          </div>
+          <div class="settings-row">
+            <label>Vote threshold <span id="lbl-vote-pct">30</span>%</label>
+            <input type="range" min="10" max="90" step="5" value="30" id="sl-vote-pct" oninput="document.getElementById('lbl-vote-pct').textContent=this.value" />
+          </div>
+        </div>
+
+        <div style="background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px; margin-bottom:16px;">
+          <div style="font-size:13px; font-weight:500; color:var(--text); margin-bottom:14px;">PPE Confidence Thresholds</div>
+          <div class="settings-row">
+            <label>Hard Hat <span id="lbl-hh">0.25</span></label>
+            <input type="range" min="0.1" max="0.9" step="0.05" value="0.25" id="sl-hh" oninput="document.getElementById('lbl-hh').textContent=parseFloat(this.value).toFixed(2)" />
+          </div>
+          <div class="settings-row">
+            <label>Safety Vest <span id="lbl-vest">0.40</span></label>
+            <input type="range" min="0.1" max="0.9" step="0.05" value="0.40" id="sl-vest" oninput="document.getElementById('lbl-vest').textContent=parseFloat(this.value).toFixed(2)" />
+          </div>
+          <div class="settings-row">
+            <label>Gloves <span id="lbl-gloves">0.40</span></label>
+            <input type="range" min="0.1" max="0.9" step="0.05" value="0.40" id="sl-gloves" oninput="document.getElementById('lbl-gloves').textContent=parseFloat(this.value).toFixed(2)" />
+          </div>
+          <div class="settings-row">
+            <label>Safety Shoes <span id="lbl-shoes">0.40</span></label>
+            <input type="range" min="0.1" max="0.9" step="0.05" value="0.40" id="sl-shoes" oninput="document.getElementById('lbl-shoes').textContent=parseFloat(this.value).toFixed(2)" />
+          </div>
+          <div class="settings-row">
+            <label>Goggles <span id="lbl-goggles">0.75</span></label>
+            <input type="range" min="0.1" max="0.9" step="0.05" value="0.75" id="sl-goggles" oninput="document.getElementById('lbl-goggles').textContent=parseFloat(this.value).toFixed(2)" />
+          </div>
+        </div>
+
+        <button class="btn primary" onclick="saveSettings()">Save Settings</button>
+        <div id="settings-saved" style="display:none; font-size:12px; color:var(--ok-light); margin-top:8px; padding:8px 12px; background:var(--ok-glow); border:1px solid var(--ok); border-radius:6px;">
+          ✓ Settings saved successfully
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Right Panel ── -->
+    <div class="right-panel">
+
+      <!-- Compliance Meter -->
+      <div>
+        <div class="section-label">Compliance Rate</div>
+        <div class="compliance-header">
+          <div style="font-size:13px; color:var(--muted);">Session average</div>
+          <div class="compliance-pct" id="comp-pct">—</div>
+        </div>
+        <div class="compliance-track">
+          <div class="compliance-fill" id="comp-bar"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted);">
+          <span id="comp-ok-count">0 compliant</span>
+          <span id="comp-viol-count">0 violations</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Alert Log -->
+      <div style="flex:1;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <div class="section-label" style="margin-bottom:0;">Alert Log</div>
+          <button class="btn" style="width:auto; padding:3px 10px; font-size:11px;" onclick="clearAlerts()">Clear</button>
+        </div>
+        <div id="alert-log">
+          <div class="empty-state">
+            <div class="icon">🔔</div>
+            <p>No alerts yet. Start the camera to begin monitoring.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- System Info -->
+      <div>
+        <div class="section-label">System</div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="display:flex; justify-content:space-between; font-size:12px;">
+            <span style="color:var(--muted);">Backend</span>
+            <span style="font-family:var(--mono); color:var(--ok-light)">Flask 3.x</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px;">
+            <span style="color:var(--muted);">Models</span>
+            <span style="font-family:var(--mono);" id="sys-models">YOLOv8</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px;">
+            <span style="color:var(--muted);">PPE Items</span>
+            <span style="font-family:var(--mono); color:var(--text)">5 categories</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px;">
+            <span style="color:var(--muted);">Stream</span>
+            <span style="font-family:var(--mono); color:var(--text)">Polled / JPEG</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+/* ─── State ─── */
+let streaming = false;
+let streamInterval = null;
+let statusInterval = null;
+let alertLog = [];
+let prevState = {};
+
+const PPE_META = {
+  hard_hat: { label: "Hard Hat",     icon: "⛑" },
+  vest:     { label: "Safety Vest",  icon: "🦺" },
+  gloves:   { label: "Gloves",       icon: "🧤" },
+  shoes:    { label: "Safety Shoes", icon: "👟" },
+  goggles:  { label: "Goggles",      icon: "🥽" },
+};
+
+/* ─── Clock ─── */
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-GB', {hour12: false});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ─── Tab switching ─── */
+function switchTab(tab) {
+  ['monitor','analyse','settings'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? 'flex' : 'none';
+  });
+  document.querySelectorAll('.nav-tab').forEach((el, i) => {
+    el.classList.toggle('active', ['monitor','analyse','settings'][i] === tab);
+  });
+}
+
+/* ─── Status polling ─── */
+async function pollStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+
+    // Models badge
+    const mb = document.getElementById('models-badge');
+    if (d.models_loaded) {
+      mb.textContent = '✓ Models ready';
+      mb.className = 'models-badge loaded';
+    } else {
+      mb.textContent = '⬤ Loading models';
+      mb.className = 'models-badge loading';
+    }
+
+    // PPE status
+    updatePPEStatus(d.detection_state);
+
+    // Session stats
+    const s = d.session_stats;
+    document.getElementById('stat-frames').textContent    = s.frames;
+    document.getElementById('stat-persons').textContent   = s.persons;
+    document.getElementById('stat-compliant').textContent = s.compliant;
+    document.getElementById('stat-violations').textContent= s.violations;
+    document.getElementById('bar-fps').textContent        = s.fps.toFixed(1);
+    document.getElementById('bar-persons').textContent    = s.persons;
+    document.getElementById('bar-compliant').textContent  = s.compliant;
+    document.getElementById('bar-violations').textContent = s.violations;
+    document.getElementById('bar-frames').textContent     = s.frames;
+    document.getElementById('fps-display').textContent    = s.fps.toFixed(1) + ' fps';
+
+    // Compliance
+    const total = s.compliant + s.violations;
+    const pct = total > 0 ? Math.round((s.compliant / total) * 100) : null;
+    document.getElementById('comp-pct').textContent = pct !== null ? pct + '%' : '—';
+    document.getElementById('comp-bar').style.width = (pct || 0) + '%';
+    document.getElementById('comp-bar').style.background =
+      pct >= 80 ? 'var(--ok-light)' : pct >= 50 ? 'var(--warn-light)' : 'var(--danger-light)';
+    document.getElementById('comp-ok-count').textContent   = s.compliant + ' compliant';
+    document.getElementById('comp-viol-count').textContent = s.violations + ' violations';
+
+    // Alert log: detect new violations/clearances
+    for (const [key, state] of Object.entries(d.detection_state)) {
+      if (prevState[key] && prevState[key] !== state && state !== 'waiting') {
+        const meta = PPE_META[key];
+        const isCrit = state === 'missing';
+        addAlert(
+          isCrit ? 'critical' : 'ok',
+          isCrit
+            ? `${meta.label} not detected`
+            : `${meta.label} detected`,
+          new Date().toLocaleTimeString('en-GB', {hour12:false})
+        );
+      }
+    }
+    prevState = {...d.detection_state};
+
+  } catch(e) { /* server not ready */ }
+}
+
+function updatePPEStatus(states) {
+  for (const [key, state] of Object.entries(states)) {
+    const el = document.querySelector(`[data-key="${key}"]`);
+    if (!el) continue;
+    el.className = 'ppe-item status-' + state;
+    const stateEl = el.querySelector('.ppe-state');
+    const pillEl  = el.querySelector('.ppe-pill');
+    if (state === 'ok') {
+      stateEl.textContent = 'Detected';
+      pillEl.textContent  = 'OK';
+    } else if (state === 'missing') {
+      stateEl.textContent = 'Not detected';
+      pillEl.textContent  = 'MISS';
+    } else {
+      stateEl.textContent = 'Waiting for detection';
+      pillEl.textContent  = '—';
+    }
+  }
+}
+
+function addAlert(type, title, time) {
+  alertLog.unshift({ type, title, time });
+  if (alertLog.length > 30) alertLog.pop();
+  renderAlerts();
+}
+
+function renderAlerts() {
+  const log = document.getElementById('alert-log');
+  if (alertLog.length === 0) {
+    log.innerHTML = '<div class="empty-state"><div class="icon">🔔</div><p>No alerts yet.</p></div>';
+    return;
+  }
+  log.innerHTML = alertLog.map(a => `
+    <div class="alert-item ${a.type}">
+      <div class="alert-dot"></div>
+      <div>
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-time">${a.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function clearAlerts() {
+  alertLog = [];
+  renderAlerts();
+}
+
+/* ─── Webcam ─── */
+async function startWebcam() {
+  await fetch('/api/webcam/start', {method:'POST'});
+  streaming = true;
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-stop').disabled  = false;
+  document.getElementById('vid-placeholder').style.display = 'none';
+  document.getElementById('stream-img').style.display = 'block';
+  document.getElementById('vid-overlays').style.display = 'flex';
+  document.getElementById('vid-res').style.display = 'block';
+  document.getElementById('live-badge').style.display = 'flex';
+  addAlert('ok', 'Camera started', new Date().toLocaleTimeString('en-GB',{hour12:false}));
+  streamInterval = setInterval(fetchFrame, 100);
+}
+
+async function stopWebcam() {
+  await fetch('/api/webcam/stop', {method:'POST'});
+  streaming = false;
+  clearInterval(streamInterval);
+  document.getElementById('btn-start').disabled = false;
+  document.getElementById('btn-stop').disabled  = true;
+  document.getElementById('vid-placeholder').style.display = 'flex';
+  document.getElementById('stream-img').style.display = 'none';
+  document.getElementById('vid-overlays').style.display = 'none';
+  document.getElementById('vid-res').style.display = 'none';
+  document.getElementById('live-badge').style.display = 'none';
+  addAlert('warning', 'Camera stopped', new Date().toLocaleTimeString('en-GB',{hour12:false}));
+}
+
+async function fetchFrame() {
+  try {
+    const r = await fetch('/api/webcam/frame');
+    const d = await r.json();
+    if (d.frame) {
+      document.getElementById('stream-img').src = 'data:image/jpeg;base64,' + d.frame;
+    }
+  } catch(e) {}
+}
+
+async function resetStats() {
+  await fetch('/api/reset', {method:'POST'});
+  alertLog = [];
+  renderAlerts();
+  addAlert('ok', 'Stats reset', new Date().toLocaleTimeString('en-GB',{hour12:false}));
+}
+
+/* ─── Image Analysis ─── */
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('upload-zone').querySelector('div:nth-child(2)').textContent = file.name;
+  analyseImage(file);
+}
+
+async function analyseImage(file) {
+  const statusEl = document.getElementById('analyse-status');
+  const statusTxt = document.getElementById('analyse-status-text');
+  const imgEl = document.getElementById('analyzed-img');
+  const resultsEl = document.getElementById('analyse-ppe-results');
+
+  statusEl.style.display = 'block';
+  statusTxt.textContent = 'Processing image…';
+  imgEl.style.display = 'none';
+  resultsEl.style.display = 'none';
+
+  const fd = new FormData();
+  fd.append('image', file);
+
+  try {
+    const r = await fetch('/api/analyse', {method:'POST', body:fd});
+    const d = await r.json();
+
+    if (d.error) {
+      statusTxt.textContent = '✗ Error: ' + d.error;
+      return;
+    }
+
+    statusTxt.textContent = '✓ Analysis complete';
+    imgEl.src = 'data:image/jpeg;base64,' + d.frame;
+    imgEl.style.display = 'block';
+
+    const listEl = document.getElementById('analyse-ppe-list');
+    listEl.innerHTML = Object.entries(d.detection_state).map(([key, state]) => {
+      const meta = PPE_META[key];
+      return `
+        <div class="ppe-item status-${state}" style="margin-bottom:6px;">
+          <div class="ppe-icon">${meta.icon}</div>
+          <div class="ppe-info">
+            <div class="ppe-name">${meta.label}</div>
+            <div class="ppe-state">${state === 'ok' ? 'Detected' : state === 'missing' ? 'Not detected' : 'Waiting'}</div>
+          </div>
+          <div class="ppe-pill">${state === 'ok' ? 'OK' : state === 'missing' ? 'MISS' : '—'}</div>
+        </div>
+      `;
+    }).join('');
+    resultsEl.style.display = 'block';
+  } catch(e) {
+    statusTxt.textContent = '✗ Failed to connect to server.';
+  }
+}
+
+/* ─── Settings ─── */
+async function saveSettings() {
+  const payload = {
+    person_conf: document.getElementById('sl-person-conf').value,
+    hh_conf:     document.getElementById('sl-hh').value,
+    v_conf:      document.getElementById('sl-vest').value,
+    g_conf:      document.getElementById('sl-gloves').value,
+    s_conf:      document.getElementById('sl-shoes').value,
+    go_conf:     document.getElementById('sl-goggles').value,
+    smooth_win:  document.getElementById('sl-smooth-win').value,
+    vote_pct:    document.getElementById('sl-vote-pct').value,
+  };
+  await fetch('/api/settings', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const el = document.getElementById('settings-saved');
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+/* ─── Init ─── */
+pollStatus();
+statusInterval = setInterval(pollStatus, 1000);
+</script>
+</body>
+</html>
