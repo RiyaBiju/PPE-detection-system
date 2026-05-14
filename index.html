@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PPE Guard — Safety Monitoring System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    /* ── Theme tokens ── */
+    [data-theme="dark"] {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2330;
+      --border: #2a3344;
+      --border2: #3a4a60;
+      --text: #e6edf3;
+      --muted: #7d8fa3;
+      --shadow: rgba(0, 0, 0, 0.35);
+    }
+
+    [data-theme="light"] {
+      --bg: #f3f5f8;
+      --surface: #ffffff;
+      --surface2: #eef1f5;
+      --border: #d6dce6;
+      --border2: #b8c2d4;
+      --text: #1a2233;
+      --muted: #6b7a93;
+      --shadow: rgba(0, 0, 0, 0.07);
+    }
+
+    :root {
+      --accent: #1f6feb;
+      --accent2: #388bfd;
+      --ok: #238636;
+      --ok-light: #2ea043;
+      --ok-glow: rgba(35, 134, 54, 0.14);
+      --warn: #9e6a03;
+      --warn-light: #d29922;
+      --warn-glow: rgba(158, 106, 3, 0.14);
+      --danger: #8b1a1a;
+      --danger-light: #f85149;
+      --danger-glow: rgba(248, 81, 73, 0.11);
+      --radius: 10px;
+      --radius-lg: 14px;
+      --font: 'DM Sans', sans-serif;
+      --mono: 'DM Mono', monospace;
+    }
+
+    [data-theme="light"] {
+      --ok-glow: rgba(35, 134, 54, 0.09);
+      --warn-glow: rgba(158, 106, 3, 0.09);
+      --danger-glow: rgba(248, 81, 73, 0.07);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      overflow-x: hidden;
+      transition: background 0.22s, color 0.22s;
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 3px;
+    }
+
+    /* ── Layout ── */
+    .app {
+      display: grid;
+      grid-template-rows: 56px 1fr;
+      height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+    }
+
+    .h-left {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .h-mid {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .h-right {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .logo {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo svg {
+      width: 17px;
+      height: 17px;
+      fill: #fff;
+    }
+
+    .brand {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .nav-tab {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: transparent;
+      font-family: var(--font);
+      transition: all 0.15s;
+    }
+
+    .nav-tab:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .nav-tab.active {
+      background: var(--surface2);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .chip.ok {
+      border-color: var(--ok);
+      color: var(--ok-light);
+      background: var(--ok-glow);
+    }
+
+    .chip.warn {
+      border-color: var(--warn);
+      color: var(--warn-light);
+      background: var(--warn-glow);
+    }
+
+    .chip.live {
+      border-color: var(--ok);
+      color: var(--ok-light);
+      background: var(--ok-glow);
+      border-radius: 20px;
+    }
+
+    .chip.proc {
+      border-color: var(--accent2);
+      color: var(--accent2);
+      background: rgba(31, 111, 235, 0.09);
+    }
+
+    .chip.warn {
+      animation: blink 1s infinite;
+    }
+
+    .blink-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: blink 1.4s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.3
+      }
+    }
+
+    .mono-chip {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      padding: 3px 6px;
+    }
+
+    .fps-chip {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      padding: 3px 8px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    .theme-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .theme-btn:hover {
+      background: var(--border);
+    }
+
+    /* ── Main grid ── */
+    main {
+      display: grid;
+      grid-template-columns: 248px 1fr 284px;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    aside {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 17px;
+      background: var(--surface);
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* PPE items */
+    .ppe-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 11px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      transition: all 0.22s;
+      margin-bottom: 5px;
+    }
+
+    .ppe-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .ppe-item.status-ok {
+      border-color: var(--ok);
+      background: var(--ok-glow);
+    }
+
+    .ppe-item.status-missing {
+      border-color: var(--danger-light);
+      background: var(--danger-glow);
+    }
+
+    .ppe-item.status-waiting {
+      opacity: 0.45;
+    }
+
+    .ppe-icon {
+      width: 29px;
+      height: 29px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--border);
+    }
+
+    .ppe-item.status-ok .ppe-icon {
+      background: rgba(46, 160, 67, 0.18);
+    }
+
+    .ppe-item.status-missing .ppe-icon {
+      background: rgba(248, 81, 73, 0.14);
+    }
+
+    .ppe-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .ppe-name {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .ppe-state {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .ppe-item.status-ok .ppe-state {
+      color: var(--ok-light);
+    }
+
+    .ppe-item.status-missing .ppe-state {
+      color: var(--danger-light);
+    }
+
+    .ppe-pill {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: var(--border);
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .ppe-item.status-ok .ppe-pill {
+      background: var(--ok);
+      color: #d4f8da;
+    }
+
+    .ppe-item.status-missing .ppe-pill {
+      background: var(--danger-light);
+      color: #fff;
+    }
+
+    /* Stat grid */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .stat-box {
+      padding: 10px;
+      border-radius: var(--radius);
+      text-align: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+    }
+
+    .stat-val {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .stat-lbl {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 8px 13px;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      background: var(--border);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn.primary:hover {
+      background: var(--accent2);
+    }
+
+    .btn.success {
+      background: var(--ok);
+      border-color: var(--ok);
+      color: #d4f8da;
+    }
+
+    .btn.success:hover {
+      opacity: 0.85;
+    }
+
+    .btn.danger {
+      background: var(--danger);
+      border-color: var(--danger-light);
+      color: var(--danger-light);
+    }
+
+    .btn.danger:hover {
+      opacity: 0.8;
+    }
+
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* ── Center ── */
+    .center-col {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    /* Tab panels */
+    .tab-panel {
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .tab-panel.active {
+      display: flex;
+    }
+
+    /* Monitor video */
+    .video-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      min-height: 0;
+    }
+
+    .video-frame {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      width: 100%;
+      max-width: 740px;
+      aspect-ratio: 4/3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 24px var(--shadow);
+    }
+
+    #stream-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+
+    .vid-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .vid-placeholder .big-icon {
+      font-size: 42px;
+      opacity: 0.22;
+    }
+
+    .vid-placeholder h3 {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .vid-placeholder p {
+      font-size: 12px;
+      opacity: 0.7;
+      max-width: 250px;
+    }
+
+    .vid-tl {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      display: none;
+      gap: 5px;
+    }
+
+    .vid-chip {
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-size: 10px;
+      background: rgba(0, 0, 0, 0.65);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(4px);
+    }
+
+    .vid-rec {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-size: 10px;
+      background: rgba(248, 81, 73, 0.85);
+      color: #fff;
+    }
+
+    .rec-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fff;
+      animation: blink 1s infinite;
+    }
+
+    .vid-br {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.6);
+      background: rgba(0, 0, 0, 0.5);
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: none;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .stats-cell {
+      flex: 1;
+      padding: 11px 15px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stats-cell:last-child {
+      border-right: none;
+    }
+
+    .stats-val {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .stats-val.ok {
+      color: var(--ok-light);
+    }
+
+    .stats-val.danger {
+      color: var(--danger-light);
+    }
+
+    .stats-lbl {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* Content tabs (Video/Analyse/Settings) */
+    .content-scroll {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .content-area {
+      padding: 24px;
+      max-width: 660px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .content-hd h2 {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .content-hd p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Upload zone */
+    .upload-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 26px 20px;
+      border: 1.5px dashed var(--border2);
+      border-radius: var(--radius-lg);
+      background: var(--surface2);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .upload-zone:hover {
+      border-color: var(--accent2);
+      background: rgba(31, 111, 235, 0.06);
+    }
+
+    .uz-icon {
+      font-size: 26px;
+      opacity: 0.45;
+    }
+
+    .uz-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .uz-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    /* Status rows */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      border-radius: var(--radius);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .status-row.ok {
+      border-color: var(--ok);
+      color: var(--ok-light);
+      background: var(--ok-glow);
+    }
+
+    .status-row.err {
+      border-color: var(--danger-light);
+      color: var(--danger-light);
+      background: var(--danger-glow);
+    }
+
+    .status-row.active {
+      border-color: var(--accent2);
+      color: var(--accent2);
+      background: rgba(31, 111, 235, 0.08);
+    }
+
+    /* Progress */
+    .progress-wrap {
+      display: none;
+      flex-direction: column;
+      gap: 7px;
+      padding: 13px 15px;
+      border-radius: var(--radius);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+    }
+
+    .progress-track {
+      height: 6px;
+      border-radius: 10px;
+      background: var(--border);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 10px;
+      background: var(--accent2);
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .result-img {
+      width: 100%;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      display: none;
+      box-shadow: 0 4px 20px var(--shadow);
+    }
+
+    /* Settings */
+    .settings-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 17px;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .settings-card h3 {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .setting-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .setting-row label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .setting-row label span {
+      font-family: var(--mono);
+      color: var(--text);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent2);
+      cursor: pointer;
+    }
+
+    /* ── Right panel ── */
+    .right-panel {
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 17px;
+      background: var(--surface);
+    }
+
+    /* Compliance */
+    .comp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 7px;
+    }
+
+    .comp-val {
+      font-family: var(--mono);
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--ok-light);
+    }
+
+    .comp-track {
+      height: 7px;
+      border-radius: 10px;
+      background: var(--border);
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .comp-fill {
+      height: 100%;
+      border-radius: 10px;
+      background: var(--ok-light);
+      transition: width 0.45s, background 0.3s;
+      width: 0%;
+    }
+
+    .comp-sub {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Alerts */
+    .alert-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+
+    .alert-item {
+      display: flex;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      margin-bottom: 5px;
+    }
+
+    .alert-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .alert-item.critical {
+      border-left: 3px solid var(--danger-light);
+      background: var(--danger-glow);
+    }
+
+    .alert-item.warning {
+      border-left: 3px solid var(--warn-light);
+      background: var(--warn-glow);
+    }
+
+    .alert-item.ok {
+      border-left: 3px solid var(--ok-light);
+      background: var(--ok-glow);
+    }
+
+    .alert-item.info {
+      border-left: 3px solid var(--accent2);
+      background: rgba(31, 111, 235, 0.07);
+    }
+
+    .alert-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .alert-item.critical .alert-dot {
+      color: var(--danger-light);
+    }
+
+    .alert-item.warning .alert-dot {
+      color: var(--warn-light);
+    }
+
+    .alert-item.ok .alert-dot {
+      color: var(--ok-light);
+    }
+
+    .alert-item.info .alert-dot {
+      color: var(--accent2);
+    }
+
+    .at {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .am {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--mono);
+      margin-top: 1px;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 14px;
+      color: var(--muted);
+      text-align: center;
+      gap: 6px;
+    }
+
+    .empty-state .ei {
+      font-size: 24px;
+      opacity: 0.28;
+    }
+
+    .empty-state p {
+      font-size: 12px;
+    }
+
+    /* Sys rows */
+    .sys-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sys-row:last-child {
+      border-bottom: none;
+    }
+
+    .sys-key {
+      color: var(--muted);
+    }
+
+    .sys-val {
+      font-family: var(--mono);
+    }
+
+    .sys-val.ok {
+      color: var(--ok-light);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- ─── Header ─── -->
+    <header>
+      <div class="h-left">
+        <div class="logo">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" />
+          </svg>
+        </div>
+        <div>
+          <div class="brand">PPE Guard</div>
+          <div class="brand-sub">Safety Monitoring System</div>
+        </div>
+      </div>
+
+      <div class="h-mid">
+        <button class="nav-tab active" onclick="switchTab('monitor')">📷 Monitor</button>
+        <button class="nav-tab" onclick="switchTab('video')">🎞 Video</button>
+        <button class="nav-tab" onclick="switchTab('analyse')">🔍 Analyse</button>
+        <button class="nav-tab" onclick="switchTab('settings')">⚙️ Settings</button>
+      </div>
+
+      <div class="h-right">
+        <span class="fps-chip" id="fps-display">0.0 fps</span>
+        <div class="chip warn" id="models-badge"><span class="blink-dot"></span> Loading</div>
+        <div class="chip live" id="live-badge" style="display:none"><span class="blink-dot"></span> LIVE</div>
+        <div class="chip proc" id="proc-badge" style="display:none"><span class="blink-dot"></span> Processing</div>
+        <div class="mono-chip" id="clock">--:--:--</div>
+        <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">☀️</button>
+      </div>
+    </header>
+
+    <!-- ─── Main ─── -->
+    <main>
+
+      <!-- Left sidebar -->
+      <aside>
+
+        <div>
+          <div class="section-label">PPE Detection</div>
+          <div id="ppe-list">
+            <div class="ppe-item status-waiting" data-key="hard_hat">
+              <div class="ppe-icon">⛑</div>
+              <div class="ppe-info">
+                <div class="ppe-name">Hard Hat</div>
+                <div class="ppe-state">Waiting…</div>
+              </div>
+              <div class="ppe-pill">—</div>
+            </div>
+            <div class="ppe-item status-waiting" data-key="vest">
+              <div class="ppe-icon">🦺</div>
+              <div class="ppe-info">
+                <div class="ppe-name">Safety Vest</div>
+                <div class="ppe-state">Waiting…</div>
+              </div>
+              <div class="ppe-pill">—</div>
+            </div>
+            <div class="ppe-item status-waiting" data-key="gloves">
+              <div class="ppe-icon">🧤</div>
+              <div class="ppe-info">
+                <div class="ppe-name">Gloves</div>
+                <div class="ppe-state">Waiting…</div>
+              </div>
+              <div class="ppe-pill">—</div>
+            </div>
+            <div class="ppe-item status-waiting" data-key="shoes">
+              <div class="ppe-icon">👟</div>
+              <div class="ppe-info">
+                <div class="ppe-name">Safety Shoes</div>
+                <div class="ppe-state">Waiting…</div>
+              </div>
+              <div class="ppe-pill">—</div>
+            </div>
+            <div class="ppe-item status-waiting" data-key="goggles">
+              <div class="ppe-icon">🥽</div>
+              <div class="ppe-info">
+                <div class="ppe-name">Goggles</div>
+                <div class="ppe-state">Waiting…</div>
+              </div>
+              <div class="ppe-pill">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div>
+          <div class="section-label">Session Stats</div>
+          <div class="stat-grid">
+            <div class="stat-box">
+              <div class="stat-val" id="s-frames">0</div>
+              <div class="stat-lbl">Frames</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val" id="s-persons">0</div>
+              <div class="stat-lbl">Persons</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val" id="s-compliant" style="color:var(--ok-light)">0</div>
+              <div class="stat-lbl">Compliant</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val" id="s-violations" style="color:var(--danger-light)">0</div>
+              <div class="stat-lbl">Violations</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div>
+          <div class="section-label">Camera Controls</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <button class="btn success" id="btn-start" onclick="startCam()">▶ Start Camera</button>
+            <button class="btn danger" id="btn-stop" onclick="stopCam()" disabled>■ Stop Camera</button>
+            <button class="btn" onclick="resetStats()">↺ Reset Stats</button>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Center column -->
+      <div class="center-col">
+
+        <!-- Monitor tab -->
+        <div class="tab-panel active" id="tab-monitor">
+          <div class="video-wrapper">
+            <div class="video-frame">
+              <div class="vid-tl" id="vid-tl">
+                <div class="vid-chip">CAM 01</div>
+                <div class="vid-rec">
+                  <div class="rec-dot"></div> REC
+                </div>
+              </div>
+              <div class="vid-br" id="vid-br">640 × 480</div>
+              <img id="stream-img" alt="Live stream" />
+              <div class="vid-placeholder" id="vid-ph">
+                <div class="big-icon">📷</div>
+                <h3>Camera Inactive</h3>
+                <p>Click "Start Camera" in the sidebar to begin real-time PPE monitoring.</p>
+              </div>
+            </div>
+          </div>
+          <div class="stats-bar">
+            <div class="stats-cell">
+              <div class="stats-val" id="b-fps">0.0</div>
+              <div class="stats-lbl">FPS</div>
+            </div>
+            <div class="stats-cell">
+              <div class="stats-val" id="b-persons">0</div>
+              <div class="stats-lbl">Persons</div>
+            </div>
+            <div class="stats-cell">
+              <div class="stats-val ok" id="b-compliant">0</div>
+              <div class="stats-lbl">Compliant</div>
+            </div>
+            <div class="stats-cell">
+              <div class="stats-val danger" id="b-violations">0</div>
+              <div class="stats-lbl">Violations</div>
+            </div>
+            <div class="stats-cell">
+              <div class="stats-val" id="b-frames">0</div>
+              <div class="stats-lbl">Total Frames</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video upload tab -->
+        <div class="tab-panel" id="tab-video">
+          <div class="content-scroll">
+            <div class="content-area">
+              <div class="content-hd">
+                <h2>🎞 Video Analysis</h2>
+                <p>Upload a video to run frame-by-frame PPE detection. Frames stream in real-time as they are processed.
+                </p>
+              </div>
+
+              <label class="upload-zone" for="vid-file-input">
+                <div class="uz-icon">🎬</div>
+                <div class="uz-title" id="vid-upload-lbl">Drop video or click to browse</div>
+                <div class="uz-sub">MP4, MOV, AVI, MKV — up to 500 MB</div>
+              </label>
+              <input type="file" id="vid-file-input" accept="video/*" onchange="handleVideo(event)" />
+
+              <div class="status-row" id="vid-status" style="display:none;">
+                <span id="vid-status-txt">Ready</span>
+              </div>
+
+              <div class="progress-wrap" id="vid-progress">
+                <div class="progress-track">
+                  <div class="progress-fill" id="vid-prog-fill"></div>
+                </div>
+                <div class="progress-meta">
+                  <span id="vid-prog-lbl">Processing…</span>
+                  <span id="vid-prog-pct">0%</span>
+                </div>
+              </div>
+
+              <div id="vid-frame-box" style="display:none;">
+                <div class="section-label" style="margin-bottom:8px;">Live Frame Output</div>
+                <img id="vid-result-img" class="result-img" style="display:block;" alt="Video frame" />
+              </div>
+
+              <div id="vid-ppe-box" style="display:none;">
+                <div class="section-label" style="margin-bottom:8px;">Current Frame Detection</div>
+                <div id="vid-ppe-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image analyse tab -->
+        <div class="tab-panel" id="tab-analyse">
+          <div class="content-scroll">
+            <div class="content-area">
+              <div class="content-hd">
+                <h2>🔍 Image Analysis</h2>
+                <p>Upload a photo for single-frame PPE detection with annotated bounding boxes.</p>
+              </div>
+
+              <label class="upload-zone" for="img-file-input">
+                <div class="uz-icon">📂</div>
+                <div class="uz-title" id="img-upload-lbl">Drop image or click to browse</div>
+                <div class="uz-sub">PNG, JPG, WEBP — up to 10 MB</div>
+              </label>
+              <input type="file" id="img-file-input" accept="image/*" onchange="handleImage(event)" />
+
+              <div class="status-row" id="img-status" style="display:none;">
+                <span id="img-status-txt">Processing…</span>
+              </div>
+
+              <img id="analyzed-img" class="result-img" alt="Analysis result" />
+
+              <div id="img-ppe-box" style="display:none;">
+                <div class="section-label" style="margin-bottom:8px;">Detection Results</div>
+                <div id="img-ppe-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings tab -->
+        <div class="tab-panel" id="tab-settings">
+          <div class="content-scroll">
+            <div class="content-area">
+              <div class="content-hd">
+                <h2>⚙️ Detection Settings</h2>
+                <p>Adjust confidence thresholds and smoothing. Saved values apply immediately to the backend.</p>
+              </div>
+
+              <div class="settings-card">
+                <h3>Person Detection</h3>
+                <div class="setting-row">
+                  <label>Person confidence <span id="lbl-pc">0.40</span></label>
+                  <input type="range" min="0.1" max="0.9" step="0.05" value="0.40" id="sl-pc"
+                    oninput="document.getElementById('lbl-pc').textContent=parseFloat(this.value).toFixed(2)" />
+                </div>
+                <div class="setting-row">
+                  <label>Smoothing window <span id="lbl-sw">15</span> frames</label>
+                  <input type="range" min="1" max="60" step="1" value="15" id="sl-sw"
+                    oninput="document.getElementById('lbl-sw').textContent=this.value" />
+                </div>
+                <div class="setting-row">
+                  <label>Vote threshold <span id="lbl-vp">30</span>%</label>
+                  <input type="range" min="10" max="90" step="5" value="30" id="sl-vp"
+                    oninput="document.getElementById('lbl-vp').textContent=this.value" />
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <h3>PPE Confidence Thresholds</h3>
+                <div class="setting-row">
+                  <label>⛑ Hard Hat <span id="lbl-hh">0.25</span></label>
+                  <input type="range" min="0.1" max="0.9" step="0.05" value="0.25" id="sl-hh"
+                    oninput="document.getElementById('lbl-hh').textContent=parseFloat(this.value).toFixed(2)" />
+                </div>
+                <div class="setting-row">
+                  <label>🦺 Safety Vest <span id="lbl-vest">0.40</span></label>
+                  <input type="range" min="0.1" max="0.9" step="0.05" value="0.40" id="sl-vest"
+                    oninput="document.getElementById('lbl-vest').textContent=parseFloat(this.value).toFixed(2)" />
+                </div>
+                <div class="setting-row">
+                  <label>🧤 Gloves <span id="lbl-glv">0.40</span></label>
+                  <input type="range" min="0.1" max="0.9" step="0.05" value="0.40" id="sl-glv"
+                    oninput="document.getElementById('lbl-glv').textContent=parseFloat(this.value).toFixed(2)" />
+                </div>
+                <div class="setting-row">
+                  <label>👟 Safety Shoes <span id="lbl-sh">0.60</span></label>
+                  <input type="range" min="0.1" max="0.9" step="0.05" value="0.60" id="sl-sh"
+                    oninput="document.getElementById('lbl-sh').textContent=parseFloat(this.value).toFixed(2)" />
+                </div>
+                <div class="setting-row">
+                  <label>🥽 Goggles <span id="lbl-go">0.75</span></label>
+                  <input type="range" min="0.1" max="0.9" step="0.05" value="0.75" id="sl-go"
+                    oninput="document.getElementById('lbl-go').textContent=parseFloat(this.value).toFixed(2)" />
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <button class="btn primary" onclick="saveSettings()">💾 Save Settings</button>
+                <div class="status-row ok" id="settings-saved" style="display:none;">✓ Settings saved successfully</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /center-col -->
+
+      <!-- Right panel -->
+      <div class="right-panel">
+
+        <div>
+          <div class="section-label">Compliance Rate</div>
+          <div class="comp-header">
+            <div style="font-size:12px;color:var(--muted);">Session average</div>
+            <div class="comp-val" id="comp-pct">—</div>
+          </div>
+          <div class="comp-track">
+            <div class="comp-fill" id="comp-bar"></div>
+          </div>
+          <div class="comp-sub">
+            <span id="comp-ok">0 compliant</span>
+            <span id="comp-viol">0 violations</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:0;">
+          <div class="alert-hdr">
+            <div class="section-label" style="margin-bottom:0;">Alert Log</div>
+            <button class="btn" style="width:auto;padding:3px 9px;font-size:11px;"
+              onclick="clearAlerts()">Clear</button>
+          </div>
+          <div id="alert-log" style="flex:1;overflow-y:auto;">
+            <div class="empty-state">
+              <div class="ei">🔔</div>
+              <p>No alerts yet. Start the camera or upload media to begin monitoring.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div>
+          <div class="section-label">System</div>
+          <div class="sys-row"><span class="sys-key">Backend</span><span class="sys-val ok">Flask</span></div>
+          <div class="sys-row"><span class="sys-key">Models</span><span class="sys-val">YOLOv8</span></div>
+          <div class="sys-row"><span class="sys-key">PPE categories</span><span class="sys-val">5</span></div>
+          <div class="sys-row"><span class="sys-key">Video stream</span><span class="sys-val">SSE / JPEG</span></div>
+          <div class="sys-row"><span class="sys-key">Model status</span><span class="sys-val"
+              id="sys-ms">Loading…</span></div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    /* ── Constants ── */
+    const PPE_META = {
+      hard_hat: { label: 'Hard Hat', icon: '⛑' },
+      vest: { label: 'Safety Vest', icon: '🦺' },
+      gloves: { label: 'Gloves', icon: '🧤' },
+      shoes: { label: 'Safety Shoes', icon: '👟' },
+      goggles: { label: 'Goggles', icon: '🥽' },
+    };
+    const TABS = ['monitor', 'video', 'analyse', 'settings'];
+
+    /* ── State ── */
+    let alertLog = [], prevState = {}, streamInterval = null, streaming = false;
+
+    /* ── Clock ── */
+    const now = () => new Date().toLocaleTimeString('en-GB', { hour12: false });
+    setInterval(() => { document.getElementById('clock').textContent = now(); }, 1000);
+
+    /* ── Theme ── */
+    function toggleTheme() {
+      const html = document.documentElement;
+      const dark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', dark ? 'light' : 'dark');
+      document.getElementById('theme-btn').textContent = dark ? '🌙' : '☀️';
+      localStorage.setItem('ppe-theme', dark ? 'light' : 'dark');
+    }
+    (function () {
+      const s = localStorage.getItem('ppe-theme');
+      if (s) {
+        document.documentElement.setAttribute('data-theme', s);
+        document.getElementById('theme-btn').textContent = s === 'dark' ? '☀️' : '🌙';
+      }
+    })();
+
+    /* ── Tabs ── */
+    function switchTab(t) {
+      TABS.forEach(id => {
+        document.getElementById('tab-' + id).classList.toggle('active', id === t);
+      });
+      document.querySelectorAll('.nav-tab').forEach((el, i) => {
+        el.classList.toggle('active', TABS[i] === t);
+      });
+    }
+
+    /* ── Status poll ── */
+    async function pollStatus() {
+      try {
+        const d = await fetch('/api/status').then(r => r.json());
+        const mb = document.getElementById('models-badge');
+        const ms = document.getElementById('sys-ms');
+        if (d.models_loaded) {
+          mb.innerHTML = '✓ Ready'; mb.className = 'chip ok';
+          ms.textContent = 'Loaded'; ms.className = 'sys-val ok';
+        } else {
+          mb.innerHTML = '<span class="blink-dot"></span> Loading'; mb.className = 'chip warn';
+          ms.textContent = 'Loading…'; ms.className = 'sys-val';
+        }
+
+        updatePPE(d.detection_state);
+
+        const s = d.session_stats;
+        ['frames', 'persons', 'compliant', 'violations'].forEach(k => {
+          document.getElementById('s-' + k).textContent = s[k];
+        });
+        document.getElementById('b-fps').textContent = s.fps.toFixed(1);
+        document.getElementById('b-persons').textContent = s.persons;
+        document.getElementById('b-compliant').textContent = s.compliant;
+        document.getElementById('b-violations').textContent = s.violations;
+        document.getElementById('b-frames').textContent = s.frames;
+        document.getElementById('fps-display').textContent = s.fps.toFixed(1) + ' fps';
+
+        const total = s.compliant + s.violations;
+        const pct = total > 0 ? Math.round(s.compliant / total * 100) : null;
+        document.getElementById('comp-pct').textContent = pct !== null ? pct + '%' : '—';
+        document.getElementById('comp-bar').style.width = (pct || 0) + '%';
+        document.getElementById('comp-bar').style.background =
+          pct === null ? 'var(--ok-light)' : pct >= 80 ? 'var(--ok-light)' : pct >= 50 ? 'var(--warn-light)' : 'var(--danger-light)';
+        document.getElementById('comp-ok').textContent = s.compliant + ' compliant';
+        document.getElementById('comp-viol').textContent = s.violations + ' violations';
+
+        for (const [k, state] of Object.entries(d.detection_state)) {
+          if (prevState[k] && prevState[k] !== state && state !== 'waiting') {
+            const m = PPE_META[k];
+            addAlert(state === 'missing' ? 'critical' : 'ok',
+              state === 'missing' ? `${m.icon} ${m.label} not detected` : `${m.icon} ${m.label} detected`,
+              now());
+          }
+        }
+        prevState = { ...d.detection_state };
+      } catch (e) { }
+    }
+
+    function updatePPE(states) {
+      for (const [k, state] of Object.entries(states)) {
+        const el = document.querySelector(`[data-key="${k}"]`);
+        if (!el) continue;
+        el.className = 'ppe-item status-' + state;
+        el.querySelector('.ppe-state').textContent =
+          state === 'ok' ? 'Detected' : state === 'missing' ? 'Not detected' : 'Waiting…';
+        el.querySelector('.ppe-pill').textContent =
+          state === 'ok' ? 'OK' : state === 'missing' ? 'MISS' : '—';
+      }
+    }
+
+    /* ── Alert log ── */
+    function addAlert(type, title, time) { alertLog.unshift({ type, title, time }); if (alertLog.length > 40) alertLog.pop(); renderAlerts(); }
+    function clearAlerts() { alertLog = []; renderAlerts(); }
+    function renderAlerts() {
+      const el = document.getElementById('alert-log');
+      if (!alertLog.length) {
+        el.innerHTML = '<div class="empty-state"><div class="ei">🔔</div><p>No alerts yet.</p></div>';
+        return;
+      }
+      el.innerHTML = alertLog.map(a => `<div class="alert-item ${a.type}">
+    <div class="alert-dot"></div>
+    <div><div class="at">${a.title}</div><div class="am">${a.time}</div></div>
+  </div>`).join('');
+    }
+
+    /* ── Camera ── */
+    async function startCam() {
+      await fetch('/api/webcam/start', { method: 'POST' });
+      streaming = true;
+      document.getElementById('btn-start').disabled = true;
+      document.getElementById('btn-stop').disabled = false;
+      document.getElementById('vid-ph').style.display = 'none';
+      document.getElementById('stream-img').style.display = 'block';
+      document.getElementById('vid-tl').style.display = 'flex';
+      document.getElementById('vid-br').style.display = 'block';
+      document.getElementById('live-badge').style.display = 'flex';
+      addAlert('ok', '📷 Camera started', now());
+      streamInterval = setInterval(fetchFrame, 100);
+    }
+    async function stopCam() {
+      await fetch('/api/webcam/stop', { method: 'POST' });
+      streaming = false;
+      clearInterval(streamInterval);
+      document.getElementById('btn-start').disabled = false;
+      document.getElementById('btn-stop').disabled = true;
+      document.getElementById('vid-ph').style.display = 'flex';
+      document.getElementById('stream-img').style.display = 'none';
+      document.getElementById('vid-tl').style.display = 'none';
+      document.getElementById('vid-br').style.display = 'none';
+      document.getElementById('live-badge').style.display = 'none';
+      addAlert('warning', '⏹ Camera stopped', now());
+    }
+    async function fetchFrame() {
+      try {
+        const d = await fetch('/api/webcam/frame').then(r => r.json());
+        if (d.frame) document.getElementById('stream-img').src = 'data:image/jpeg;base64,' + d.frame;
+      } catch (e) { }
+    }
+    async function resetStats() {
+      await fetch('/api/reset', { method: 'POST' });
+      alertLog = []; renderAlerts();
+      addAlert('info', '↺ Stats reset', now());
+    }
+
+    /* ── Video Upload ── */
+    function handleVideo(e) {
+      const f = e.target.files[0]; if (!f) return;
+      document.getElementById('vid-upload-lbl').textContent = f.name;
+      uploadVideo(f);
+    }
+    function uploadVideo(file) {
+      const statusEl = document.getElementById('vid-status');
+      const statusTxt = document.getElementById('vid-status-txt');
+      const progWrap = document.getElementById('vid-progress');
+      const progFill = document.getElementById('vid-prog-fill');
+      const progLbl = document.getElementById('vid-prog-lbl');
+      const progPct = document.getElementById('vid-prog-pct');
+      const frameBox = document.getElementById('vid-frame-box');
+      const resultImg = document.getElementById('vid-result-img');
+      const ppeBox = document.getElementById('vid-ppe-box');
+
+      statusEl.style.display = 'flex'; statusEl.className = 'status-row active';
+      statusTxt.textContent = 'Uploading…';
+      progWrap.style.display = 'flex'; progFill.style.width = '0%';
+      progPct.textContent = '0%'; progLbl.textContent = 'Starting…';
+      frameBox.style.display = 'none'; ppeBox.style.display = 'none';
+      document.getElementById('proc-badge').style.display = 'flex';
+      addAlert('info', '🎞 Video upload started', now());
+
+      const fd = new FormData(); fd.append('video', file);
+
+      fetch('/api/video/upload', { method: 'POST', body: fd }).then(response => {
+        statusTxt.textContent = 'Processing frames…';
+        const reader = response.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+
+        function read() {
+          reader.read().then(({ done, value }) => {
+            if (done) { onVideoDone(); return; }
+            buf += dec.decode(value, { stream: true });
+            const lines = buf.split('\n'); buf = lines.pop();
+
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const payload = line.slice(6).trim();
+              if (payload === 'DONE') { onVideoDone(); return; }
+              const pipe = payload.lastIndexOf('|');
+              if (pipe === -1) continue;
+              const b64 = payload.slice(0, pipe);
+              const prog = parseInt(payload.slice(pipe + 1)) || 0;
+
+              resultImg.src = 'data:image/jpeg;base64,' + b64;
+              frameBox.style.display = 'block';
+              progFill.style.width = prog + '%';
+              progPct.textContent = prog + '%';
+              progLbl.textContent = 'Processing… ' + prog + '%';
+
+              /* Periodically refresh PPE state */
+              if (prog % 5 === 0) {
+                fetch('/api/status').then(r => r.json()).then(d => {
+                  updatePPE(d.detection_state);
+                  renderVideoPPE(d.detection_state); ppeBox.style.display = 'block';
+                  const s = d.session_stats;
+                  document.getElementById('s-frames').textContent = s.frames;
+                  document.getElementById('s-persons').textContent = s.persons;
+                  document.getElementById('s-compliant').textContent = s.compliant;
+                  document.getElementById('s-violations').textContent = s.violations;
+                }).catch(() => { });
+              }
+            }
+            read();
+          }).catch(onVideoDone);
+        }
+        read();
+      }).catch(err => {
+        statusEl.className = 'status-row err';
+        statusTxt.textContent = '✗ Upload failed: ' + err.message;
+        document.getElementById('proc-badge').style.display = 'none';
+        addAlert('critical', '✗ Video upload failed', now());
+      });
+    }
+    function onVideoDone() {
+      document.getElementById('vid-status').className = 'status-row ok';
+      document.getElementById('vid-status-txt').textContent = '✓ Video analysis complete';
+      document.getElementById('vid-prog-lbl').textContent = 'Complete';
+      document.getElementById('vid-prog-fill').style.width = '100%';
+      document.getElementById('vid-prog-pct').textContent = '100%';
+      document.getElementById('proc-badge').style.display = 'none';
+      addAlert('ok', '✓ Video analysis complete', now());
+    }
+    function renderVideoPPE(states) {
+      document.getElementById('vid-ppe-list').innerHTML =
+        Object.entries(states).map(([k, state]) => {
+          const m = PPE_META[k];
+          return `<div class="ppe-item status-${state}" style="margin-bottom:5px;">
+        <div class="ppe-icon">${m.icon}</div>
+        <div class="ppe-info"><div class="ppe-name">${m.label}</div>
+        <div class="ppe-state">${state === 'ok' ? 'Detected' : state === 'missing' ? 'Not detected' : 'Waiting'}</div></div>
+        <div class="ppe-pill">${state === 'ok' ? 'OK' : state === 'missing' ? 'MISS' : '—'}</div>
+      </div>`;
+        }).join('');
+    }
+
+    /* ── Image Analyse ── */
+    function handleImage(e) {
+      const f = e.target.files[0]; if (!f) return;
+      document.getElementById('img-upload-lbl').textContent = f.name;
+      analyseImage(f);
+    }
+    async function analyseImage(file) {
+      const sEl = document.getElementById('img-status');
+      const sTxt = document.getElementById('img-status-txt');
+      const imgEl = document.getElementById('analyzed-img');
+      const resEl = document.getElementById('img-ppe-box');
+
+      sEl.style.display = 'flex'; sEl.className = 'status-row active';
+      sTxt.textContent = 'Processing image…';
+      imgEl.style.display = 'none'; resEl.style.display = 'none';
+
+      const fd = new FormData(); fd.append('image', file);
+      try {
+        const d = await fetch('/api/analyse', { method: 'POST', body: fd }).then(r => r.json());
+        if (d.error) { sEl.className = 'status-row err'; sTxt.textContent = '✗ ' + d.error; return; }
+        sEl.className = 'status-row ok'; sTxt.textContent = '✓ Analysis complete';
+        imgEl.src = 'data:image/jpeg;base64,' + d.frame; imgEl.style.display = 'block';
+        document.getElementById('img-ppe-list').innerHTML =
+          Object.entries(d.detection_state).map(([k, state]) => {
+            const m = PPE_META[k];
+            return `<div class="ppe-item status-${state}" style="margin-bottom:5px;">
+          <div class="ppe-icon">${m.icon}</div>
+          <div class="ppe-info"><div class="ppe-name">${m.label}</div>
+          <div class="ppe-state">${state === 'ok' ? 'Detected' : state === 'missing' ? 'Not detected' : 'Waiting'}</div></div>
+          <div class="ppe-pill">${state === 'ok' ? 'OK' : state === 'missing' ? 'MISS' : '—'}</div>
+        </div>`;
+          }).join('');
+        resEl.style.display = 'block';
+        addAlert('info', '🔍 Image analysis complete', now());
+      } catch (e) {
+        sEl.className = 'status-row err'; sTxt.textContent = '✗ Failed to connect.';
+      }
+    }
+
+    /* ── Settings ── */
+    async function saveSettings() {
+      await fetch('/api/settings', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          person_conf: document.getElementById('sl-pc').value,
+          hh_conf: document.getElementById('sl-hh').value,
+          v_conf: document.getElementById('sl-vest').value,
+          g_conf: document.getElementById('sl-glv').value,
+          s_conf: document.getElementById('sl-sh').value,
+          go_conf: document.getElementById('sl-go').value,
+          smooth_win: document.getElementById('sl-sw').value,
+          vote_pct: document.getElementById('sl-vp').value,
+        })
+      });
+      const el = document.getElementById('settings-saved');
+      el.style.display = 'flex'; setTimeout(() => el.style.display = 'none', 3000);
+    }
+
+    /* ── Init ── */
+    pollStatus();
+    setInterval(pollStatus, 1000);
+  </script>
+</body>
+
+</html>
